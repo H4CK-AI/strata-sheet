@@ -1,11 +1,57 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
+import { CRMModule } from "@/components/modules/CRMModule";
+import { TeamModule } from "@/components/modules/TeamModule";
 
 const Index = () => {
+  const [activeModule, setActiveModule] = useState('dashboard');
+
+  const renderModule = () => {
+    switch (activeModule) {
+      case 'dashboard':
+        return <DashboardOverview />;
+      case 'clients':
+        return <CRMModule />;
+      case 'team':
+        return <TeamModule />;
+      case 'finance':
+        return (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold gradient-text mb-2">Finance Module</h3>
+              <p className="text-muted-foreground">Coming soon...</p>
+            </div>
+          </div>
+        );
+      case 'analytics':
+        return (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold gradient-text mb-2">Analytics Module</h3>
+              <p className="text-muted-foreground">Coming soon...</p>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold gradient-text mb-2">{activeModule} Module</h3>
+              <p className="text-muted-foreground">Coming soon...</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <div className="flex">
+        <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+        <main className="flex-1 p-8">
+          {renderModule()}
+        </main>
       </div>
     </div>
   );
