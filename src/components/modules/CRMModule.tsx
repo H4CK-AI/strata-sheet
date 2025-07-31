@@ -7,6 +7,7 @@ import { Plus, Search, Filter, Edit, Trash2, Users } from "lucide-react";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { AddClientModal } from "@/components/modals/AddClientModal";
 
 interface Client {
   id: string;
@@ -106,6 +107,29 @@ export const CRMModule = () => {
     setFilteredClients(filtered);
   };
 
+  const handleAddClient = (newClient: Client) => {
+    setClients(prev => [...prev, newClient]);
+    toast({
+      title: "Success",
+      description: "Client added successfully to local data.",
+    });
+  };
+
+  const handleEditClient = (clientId: string) => {
+    toast({
+      title: "Edit Client",
+      description: "Edit functionality coming soon!",
+    });
+  };
+
+  const handleDeleteClient = (clientId: string) => {
+    setClients(prev => prev.filter(client => client.id !== clientId));
+    toast({
+      title: "Client Deleted",
+      description: "Client removed from local data.",
+    });
+  };
+
   const getStatusColor = (status: Client['status']) => {
     switch (status) {
       case 'Lead':
@@ -136,10 +160,7 @@ export const CRMModule = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold gradient-text">Customer Relationship Management</h2>
-        <Button className="glow-cyan">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Client
-        </Button>
+        <AddClientModal onAddClient={handleAddClient} />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -197,11 +218,21 @@ export const CRMModule = () => {
               </div>
               
               <div className="flex gap-2 pt-2">
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={() => handleEditClient(client.id)}
+                >
                   <Edit className="mr-2 h-3 w-3" />
                   Edit
                 </Button>
-                <Button size="sm" variant="outline" className="text-destructive hover:text-destructive">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => handleDeleteClient(client.id)}
+                >
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -220,10 +251,7 @@ export const CRMModule = () => {
                 ? "Try adjusting your filters"
                 : "Get started by adding your first client"}
             </p>
-            <Button className="glow-cyan">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Client
-            </Button>
+            <AddClientModal onAddClient={handleAddClient} />
           </CardContent>
         </Card>
       )}

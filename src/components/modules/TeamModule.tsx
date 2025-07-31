@@ -8,6 +8,7 @@ import { Plus, User, DollarSign } from "lucide-react";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { AddTeamMemberModal } from "@/components/modals/AddTeamMemberModal";
 
 interface TeamMember {
   id: string;
@@ -27,6 +28,14 @@ export const TeamModule = () => {
   useEffect(() => {
     loadTeam();
   }, []);
+
+  const handleAddMember = (newMember: TeamMember) => {
+    setTeam(prev => [...prev, newMember]);
+    toast({
+      title: "Success",
+      description: "Team member added successfully to local data.",
+    });
+  };
 
   const loadTeam = async () => {
     try {
@@ -124,10 +133,7 @@ export const TeamModule = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold gradient-text">Team Management</h2>
-        <Button className="glow-cyan">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Team Member
-        </Button>
+        <AddTeamMemberModal onAddMember={handleAddMember} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

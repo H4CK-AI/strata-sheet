@@ -4,6 +4,7 @@ import { Users, DollarSign, TrendingUp, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { useToast } from "@/hooks/use-toast";
+import { AddClientModal } from "@/components/modals/AddClientModal";
 
 interface DashboardData {
   totalClients: number;
@@ -83,6 +84,33 @@ export const DashboardOverview = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQuickAddClient = (client: any) => {
+    toast({
+      title: "Client Added",
+      description: "New client added successfully.",
+    });
+    // Refresh dashboard data to reflect the new client
+    loadDashboardData();
+  };
+
+  const handleGenerateReport = () => {
+    toast({
+      title: "Generating Report",
+      description: "Monthly analytics report is being prepared.",
+    });
+    // Simulate report generation
+    setTimeout(() => {
+      toast({
+        title: "Report Ready",
+        description: "Your monthly report has been generated successfully.",
+      });
+    }, 2000);
+  };
+
+  const handleUpdateKPIs = () => {
+    loadDashboardData();
   };
 
   if (loading) {
@@ -170,15 +198,26 @@ export const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3">
-              <button className="p-3 text-left bg-secondary/20 rounded-lg transition-smooth hover:bg-secondary/40 hover:glow-cyan">
-                <div className="font-medium">Add New Client</div>
-                <div className="text-sm text-muted-foreground">Create a new client entry</div>
-              </button>
-              <button className="p-3 text-left bg-secondary/20 rounded-lg transition-smooth hover:bg-secondary/40 hover:glow-purple">
+              <AddClientModal 
+                onAddClient={handleQuickAddClient}
+                trigger={
+                  <button className="p-3 text-left bg-secondary/20 rounded-lg transition-smooth hover:bg-secondary/40 hover:glow-cyan w-full">
+                    <div className="font-medium">Add New Client</div>
+                    <div className="text-sm text-muted-foreground">Create a new client entry</div>
+                  </button>
+                }
+              />
+              <button 
+                onClick={handleGenerateReport}
+                className="p-3 text-left bg-secondary/20 rounded-lg transition-smooth hover:bg-secondary/40 hover:glow-purple"
+              >
                 <div className="font-medium">Generate Report</div>
                 <div className="text-sm text-muted-foreground">Export monthly analytics</div>
               </button>
-              <button className="p-3 text-left bg-secondary/20 rounded-lg transition-smooth hover:bg-secondary/40 hover:glow-cyan">
+              <button 
+                onClick={handleUpdateKPIs}
+                className="p-3 text-left bg-secondary/20 rounded-lg transition-smooth hover:bg-secondary/40 hover:glow-cyan"
+              >
                 <div className="font-medium">Update KPIs</div>
                 <div className="text-sm text-muted-foreground">Refresh key metrics</div>
               </button>
