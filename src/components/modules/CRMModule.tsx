@@ -4,20 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Filter, Edit, Trash2, Users } from "lucide-react";
-import { googleSheetsService } from "@/lib/google-sheets";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { AddClientModal } from "@/components/modals/AddClientModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Client {
   id: string;
   name: string;
-  email: string;
-  status: 'Lead' | 'Active' | 'Dormant' | 'Churned';
-  source: string;
-  value: number;
-  lastContact: string;
-  created: string;
+  industry: string;
+  revenue: string;
+  status: string;
+  employees: number;
+  contract_end: string;
+  risk_score: number;
+  profitability: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const CRMModule = () => {
@@ -26,6 +32,8 @@ export const CRMModule = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [loading, setLoading] = useState(true);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,44 +47,17 @@ export const CRMModule = () => {
   const loadClients = async () => {
     try {
       setLoading(true);
-      const data = await googleSheetsService.readSheet('Clients!A:H');
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (data.length <= 1) {
-        // If no data, add sample data
-        const sampleData = [
-          ['ID', 'Name', 'Email', 'Status', 'Source', 'Value', 'Last Contact', 'Created'],
-          ['1', 'Acme Corp', 'contact@acme.com', 'Active', 'Website', '50000', '2024-01-15', '2024-01-01'],
-          ['2', 'TechStart Inc', 'hello@techstart.com', 'Lead', 'Referral', '25000', '2024-01-10', '2024-01-08'],
-          ['3', 'Global Solutions', 'info@global.com', 'Dormant', 'LinkedIn', '75000', '2023-12-20', '2023-12-01'],
-        ];
-        await googleSheetsService.writeSheet('Clients!A:H', sampleData);
-        setClients(sampleData.slice(1).map(row => ({
-          id: row[0],
-          name: row[1],
-          email: row[2],
-          status: row[3] as Client['status'],
-          source: row[4],
-          value: parseFloat(row[5]) || 0,
-          lastContact: row[6],
-          created: row[7],
-        })));
-      } else {
-        const clientData = data.slice(1).map(row => ({
-          id: row[0] || '',
-          name: row[1] || '',
-          email: row[2] || '',
-          status: (row[3] || 'Lead') as Client['status'],
-          source: row[4] || '',
-          value: parseFloat(row[5]) || 0,
-          lastContact: row[6] || '',
-          created: row[7] || '',
-        }));
-        setClients(clientData);
-      }
+      if (error) throw error;
       
+      setClients(data || []);
       toast({
         title: "CRM Data Loaded",
-        description: "Client data synced successfully.",
+        description: "Client data loaded successfully.",
       });
     } catch (error) {
       console.error('Error loading clients:', error);
@@ -96,7 +77,7 @@ export const CRMModule = () => {
     if (searchTerm) {
       filtered = filtered.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchTerm.toLowerCase())
+        client.industry.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -107,39 +88,96 @@ export const CRMModule = () => {
     setFilteredClients(filtered);
   };
 
-  const handleAddClient = (newClient: Client) => {
-    setClients(prev => [...prev, newClient]);
-    toast({
-      title: "Success",
-      description: "Client added successfully to local data.",
-    });
+  const handleAddClient = async (newClient: Omit<Client, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([newClient])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setClients(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Client added successfully.",
+      });
+    } catch (error) {
+      console.error('Error adding client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add client.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditClient = (clientId: string) => {
-    toast({
-      title: "Edit Client",
-      description: "Edit functionality coming soon!",
-    });
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client);
+    setIsEditDialogOpen(true);
   };
 
-  const handleDeleteClient = (clientId: string) => {
-    setClients(prev => prev.filter(client => client.id !== clientId));
-    toast({
-      title: "Client Deleted",
-      description: "Client removed from local data.",
-    });
+  const handleUpdateClient = async (updatedClient: Client) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update(updatedClient)
+        .eq('id', updatedClient.id);
+      
+      if (error) throw error;
+      
+      setClients(prev => prev.map(client => 
+        client.id === updatedClient.id ? updatedClient : client
+      ));
+      setIsEditDialogOpen(false);
+      setEditingClient(null);
+      toast({
+        title: "Success",
+        description: "Client updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update client.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const getStatusColor = (status: Client['status']) => {
+  const handleDeleteClient = async (clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', clientId);
+      
+      if (error) throw error;
+      
+      setClients(prev => prev.filter(client => client.id !== clientId));
+      toast({
+        title: "Client Deleted",
+        description: "Client removed successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete client.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Lead':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'Active':
         return 'bg-neon-green/20 text-neon-green border-neon-green/30';
-      case 'Dormant':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-      case 'Churned':
+      case 'Inactive':
         return 'bg-destructive/20 text-destructive border-destructive/30';
+      case 'Pending':
+        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -174,7 +212,7 @@ export const CRMModule = () => {
           />
         </div>
         <div className="flex gap-2">
-          {['All', 'Lead', 'Active', 'Dormant', 'Churned'].map((status) => (
+          {['All', 'Active', 'Inactive', 'Pending'].map((status) => (
             <Button
               key={status}
               variant={statusFilter === status ? "default" : "outline"}
@@ -198,23 +236,34 @@ export const CRMModule = () => {
                   {client.status}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">{client.email}</p>
+              <p className="text-sm text-muted-foreground">{client.industry}</p>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Source:</span>
-                  <p className="font-medium">{client.source}</p>
+                  <span className="text-muted-foreground">Revenue:</span>
+                  <p className="font-medium text-neon-green">{client.revenue}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Value:</span>
-                  <p className="font-medium text-neon-green">${client.value.toLocaleString()}</p>
+                  <span className="text-muted-foreground">Employees:</span>
+                  <p className="font-medium">{client.employees}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Risk Score:</span>
+                  <p className="font-medium">{client.risk_score}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Profitability:</span>
+                  <p className="font-medium">{client.profitability}</p>
                 </div>
               </div>
               
               <div className="text-sm">
-                <span className="text-muted-foreground">Last Contact:</span>
-                <p className="font-medium">{new Date(client.lastContact).toLocaleDateString()}</p>
+                <span className="text-muted-foreground">Contract End:</span>
+                <p className="font-medium">{client.contract_end ? new Date(client.contract_end).toLocaleDateString() : 'N/A'}</p>
               </div>
               
               <div className="flex gap-2 pt-2">
@@ -222,7 +271,7 @@ export const CRMModule = () => {
                   size="sm" 
                   variant="outline" 
                   className="flex-1" 
-                  onClick={() => handleEditClient(client.id)}
+                  onClick={() => handleEditClient(client)}
                 >
                   <Edit className="mr-2 h-3 w-3" />
                   Edit
@@ -255,6 +304,73 @@ export const CRMModule = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Client Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Client</DialogTitle>
+          </DialogHeader>
+          {editingClient && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={editingClient.name}
+                  onChange={(e) => setEditingClient({...editingClient, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="industry">Industry</Label>
+                <Input
+                  id="industry"
+                  value={editingClient.industry}
+                  onChange={(e) => setEditingClient({...editingClient, industry: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="revenue">Revenue</Label>
+                <Input
+                  id="revenue"
+                  value={editingClient.revenue}
+                  onChange={(e) => setEditingClient({...editingClient, revenue: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="employees">Employees</Label>
+                <Input
+                  id="employees"
+                  type="number"
+                  value={editingClient.employees}
+                  onChange={(e) => setEditingClient({...editingClient, employees: parseInt(e.target.value) || 0})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <select 
+                  id="status"
+                  className="w-full p-2 border rounded"
+                  value={editingClient.status}
+                  onChange={(e) => setEditingClient({...editingClient, status: e.target.value})}
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => handleUpdateClient(editingClient)} className="flex-1">
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

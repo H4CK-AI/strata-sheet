@@ -5,6 +5,7 @@ import { CRMModule } from "@/components/modules/CRMModule";
 import { TeamModule } from "@/components/modules/TeamModule";
 import { FinanceModule } from "@/components/modules/FinanceModule";
 import { TaskModule } from "@/components/modules/TaskModule";
+import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
@@ -22,14 +23,7 @@ const Index = () => {
       case 'tasks':
         return <TaskModule />;
       case 'analytics':
-        return (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold gradient-text mb-2">Analytics Module</h3>
-              <p className="text-muted-foreground">Coming soon...</p>
-            </div>
-          </div>
-        );
+        return <AnalyticsOverview />;
       default:
         return (
           <div className="flex items-center justify-center h-64">

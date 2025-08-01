@@ -4,79 +4,54 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Plus, User, DollarSign } from "lucide-react";
-import { googleSheetsService } from "@/lib/google-sheets";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, User, DollarSign, Edit, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { AddTeamMemberModal } from "@/components/modals/AddTeamMemberModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface TeamMember {
   id: string;
   name: string;
-  role: string;
-  salary: number;
-  status: 'Active' | 'On Leave' | 'Terminated';
+  position: string;
+  department: string;
+  salary: string;
+  status: string;
   performance: number;
-  joined: string;
+  skills: string[];
+  join_date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const TeamModule = () => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadTeam();
   }, []);
 
-  const handleAddMember = (newMember: TeamMember) => {
-    setTeam(prev => [...prev, newMember]);
-    toast({
-      title: "Success",
-      description: "Team member added successfully to local data.",
-    });
-  };
-
   const loadTeam = async () => {
     try {
       setLoading(true);
-      const data = await googleSheetsService.readSheet('Team!A:G');
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (data.length <= 1) {
-        // Add sample team data
-        const sampleData = [
-          ['ID', 'Name', 'Role', 'Salary', 'Status', 'Performance', 'Joined'],
-          ['1', 'Alice Johnson', 'Frontend Developer', '75000', 'Active', '92', '2023-06-01'],
-          ['2', 'Bob Smith', 'Backend Developer', '80000', 'Active', '88', '2023-04-15'],
-          ['3', 'Carol Davis', 'UI/UX Designer', '70000', 'Active', '95', '2023-08-01'],
-          ['4', 'David Wilson', 'Project Manager', '85000', 'On Leave', '87', '2023-03-01'],
-        ];
-        await googleSheetsService.writeSheet('Team!A:G', sampleData);
-        setTeam(sampleData.slice(1).map(row => ({
-          id: row[0],
-          name: row[1],
-          role: row[2],
-          salary: parseFloat(row[3]) || 0,
-          status: row[4] as TeamMember['status'],
-          performance: parseFloat(row[5]) || 0,
-          joined: row[6],
-        })));
-      } else {
-        const teamData = data.slice(1).map(row => ({
-          id: row[0] || '',
-          name: row[1] || '',
-          role: row[2] || '',
-          salary: parseFloat(row[3]) || 0,
-          status: (row[4] || 'Active') as TeamMember['status'],
-          performance: parseFloat(row[5]) || 0,
-          joined: row[6] || '',
-        }));
-        setTeam(teamData);
-      }
+      if (error) throw error;
       
+      setTeam(data || []);
       toast({
         title: "Team Data Loaded",
-        description: "Team information synced successfully.",
+        description: "Team information loaded successfully.",
       });
     } catch (error) {
       console.error('Error loading team:', error);
@@ -90,7 +65,89 @@ export const TeamModule = () => {
     }
   };
 
-  const getStatusColor = (status: TeamMember['status']) => {
+  const handleAddMember = async (newMember: Omit<TeamMember, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .insert([newMember])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      setTeam(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Team member added successfully.",
+      });
+    } catch (error) {
+      console.error('Error adding team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add team member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditMember = (member: TeamMember) => {
+    setEditingMember(member);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateMember = async (updatedMember: TeamMember) => {
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .update(updatedMember)
+        .eq('id', updatedMember.id);
+      
+      if (error) throw error;
+      
+      setTeam(prev => prev.map(member => 
+        member.id === updatedMember.id ? updatedMember : member
+      ));
+      setIsEditDialogOpen(false);
+      setEditingMember(null);
+      toast({
+        title: "Success",
+        description: "Team member updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update team member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteMember = async (memberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', memberId);
+      
+      if (error) throw error;
+      
+      setTeam(prev => prev.filter(member => member.id !== memberId));
+      toast({
+        title: "Team Member Deleted",
+        description: "Team member removed successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete team member.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active':
         return 'bg-neon-green/20 text-neon-green border-neon-green/30';
@@ -110,13 +167,17 @@ export const TeamModule = () => {
     return 'text-destructive';
   };
 
-  const totalPayroll = team.reduce((sum, member) => 
-    member.status === 'Active' ? sum + member.salary : sum, 0
-  );
+  // Calculate analytics
+  const totalPayroll = team.reduce((sum, member) => {
+    const salary = parseFloat(member.salary.replace(/[^0-9.-]+/g, "")) || 0;
+    return member.status === 'Active' ? sum + salary : sum;
+  }, 0);
 
   const averagePerformance = team.length > 0 
     ? team.reduce((sum, member) => sum + member.performance, 0) / team.length 
     : 0;
+
+  const activeMembers = team.filter(m => m.status === 'Active').length;
 
   if (loading) {
     return (
@@ -136,6 +197,7 @@ export const TeamModule = () => {
         <AddTeamMemberModal onAddMember={handleAddMember} />
       </div>
 
+      {/* Analytics Cards */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -145,22 +207,22 @@ export const TeamModule = () => {
           <CardContent>
             <div className="text-2xl font-bold gradient-text">{team.length}</div>
             <p className="text-xs text-muted-foreground">
-              {team.filter(m => m.status === 'Active').length} active members
+              {activeMembers} active members
             </p>
           </CardContent>
         </Card>
 
         <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Payroll</CardTitle>
+            <CardTitle className="text-sm font-medium">Annual Payroll</CardTitle>
             <DollarSign className="h-4 w-4 text-neon-cyan" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold gradient-text">
-              ${(totalPayroll / 12).toLocaleString()}
+              ${totalPayroll.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              ${totalPayroll.toLocaleString()} annually
+              ${(totalPayroll / 12).toLocaleString()} monthly
             </p>
           </CardContent>
         </Card>
@@ -179,6 +241,7 @@ export const TeamModule = () => {
         </Card>
       </div>
 
+      {/* Team Members Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {team.map((member) => (
           <Card key={member.id} className="glass-card transition-smooth hover:glow-cyan">
@@ -196,24 +259,27 @@ export const TeamModule = () => {
                       {member.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">{member.role}</p>
+                  <p className="text-sm text-muted-foreground">{member.position}</p>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-muted-foreground">Salary:</span>
-                  <p className="font-medium text-neon-green">
-                    ${member.salary.toLocaleString()}
-                  </p>
+                  <span className="text-muted-foreground">Department:</span>
+                  <p className="font-medium">{member.department}</p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Joined:</span>
-                  <p className="font-medium">
-                    {new Date(member.joined).toLocaleDateString()}
-                  </p>
+                  <span className="text-muted-foreground">Salary:</span>
+                  <p className="font-medium text-neon-green">{member.salary}</p>
                 </div>
+              </div>
+              
+              <div>
+                <span className="text-muted-foreground text-sm">Joined:</span>
+                <p className="font-medium">
+                  {new Date(member.join_date).toLocaleDateString()}
+                </p>
               </div>
               
               <div>
@@ -225,10 +291,125 @@ export const TeamModule = () => {
                 </div>
                 <Progress value={member.performance} className="h-2" />
               </div>
+
+              {member.skills && member.skills.length > 0 && (
+                <div>
+                  <span className="text-muted-foreground text-sm">Skills:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {member.skills.slice(0, 3).map((skill, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {member.skills.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{member.skills.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={() => handleEditMember(member)}
+                >
+                  <Edit className="mr-2 h-3 w-3" />
+                  Edit
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => handleDeleteMember(member.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
+
+      {/* Edit Member Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Team Member</DialogTitle>
+          </DialogHeader>
+          {editingMember && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={editingMember.name}
+                  onChange={(e) => setEditingMember({...editingMember, name: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="position">Position</Label>
+                <Input
+                  id="position"
+                  value={editingMember.position}
+                  onChange={(e) => setEditingMember({...editingMember, position: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  id="department"
+                  value={editingMember.department}
+                  onChange={(e) => setEditingMember({...editingMember, department: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="salary">Salary</Label>
+                <Input
+                  id="salary"
+                  value={editingMember.salary}
+                  onChange={(e) => setEditingMember({...editingMember, salary: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="performance">Performance (%)</Label>
+                <Input
+                  id="performance"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editingMember.performance}
+                  onChange={(e) => setEditingMember({...editingMember, performance: parseInt(e.target.value) || 0})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <select 
+                  id="status"
+                  className="w-full p-2 border rounded"
+                  value={editingMember.status}
+                  onChange={(e) => setEditingMember({...editingMember, status: e.target.value})}
+                >
+                  <option value="Active">Active</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Terminated">Terminated</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button onClick={() => handleUpdateMember(editingMember)} className="flex-1">
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
