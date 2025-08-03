@@ -56,6 +56,45 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          priority: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           created_at: string
@@ -130,6 +169,48 @@ export type Database = {
           profit?: string
           revenue?: string
           salaries?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          category: string
+          client_reference: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          mode: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          client_reference?: string | null
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          mode?: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          client_reference?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          mode?: string
+          status?: string
+          type?: string
           updated_at?: string
         }
         Relationships: []

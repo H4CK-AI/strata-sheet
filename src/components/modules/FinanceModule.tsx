@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DollarSign, TrendingUp, TrendingDown, Plus, FileText, Clock, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { AddTransactionModal } from "@/components/modals/AddTransactionModal";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { TransactionHistory } from './TransactionHistory';
 
 interface FinanceData {
   id: string;
@@ -198,7 +199,7 @@ export const FinanceModule = () => {
         <h2 className="text-3xl font-bold gradient-text">Finance & Analytics</h2>
         <Button className="glow-cyan" onClick={() => {}}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Record
+          Add Monthly Record
         </Button>
       </div>
 
@@ -260,6 +261,9 @@ export const FinanceModule = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Transaction History Section */}
+      <TransactionHistory />
 
       {/* Analytics Charts */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -404,7 +408,7 @@ export const FinanceModule = () => {
       {/* Finance Records Table */}
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle className="gradient-text">Financial Records</CardTitle>
+          <CardTitle className="gradient-text">Monthly Financial Records</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
