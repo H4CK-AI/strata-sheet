@@ -36,13 +36,14 @@ export const AddTeamMemberModal = ({ onAddMember, trigger }: AddTeamMemberModalP
     }
 
     const newMember = {
-      id: Date.now().toString(),
       name: formData.name,
-      role: formData.role,
-      salary: parseFloat(formData.salary) || 0,
+      position: formData.role,
+      department: formData.role, // Using role as department for now
+      salary: `₹${formData.salary}`,
       status: formData.status,
       performance: parseFloat(formData.performance) || 80,
-      joined: new Date().toISOString().split('T')[0],
+      join_date: new Date().toISOString().split('T')[0],
+      skills: [],
     };
 
     onAddMember(newMember);

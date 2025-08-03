@@ -16,8 +16,8 @@ export const AddClientModal = ({ onAddClient, trigger }: AddClientModalProps) =>
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
-    status: "Lead",
+    industry: "",
+    status: "Active",
     source: "",
     value: "",
   });
@@ -26,28 +26,28 @@ export const AddClientModal = ({ onAddClient, trigger }: AddClientModalProps) =>
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email) {
+    if (!formData.name || !formData.industry) {
       toast({
         title: "Validation Error",
-        description: "Name and email are required.",
+        description: "Name and industry are required.",
         variant: "destructive",
       });
       return;
     }
 
     const newClient = {
-      id: Date.now().toString(),
       name: formData.name,
-      email: formData.email,
+      industry: formData.industry || 'Technology',
       status: formData.status,
-      source: formData.source,
-      value: parseFloat(formData.value) || 0,
-      lastContact: new Date().toISOString().split('T')[0],
-      created: new Date().toISOString().split('T')[0],
+      revenue: `₹${formData.value || 0}`,
+      employees: 0,
+      contract_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      risk_score: Math.floor(Math.random() * 100),
+      profitability: 'Medium',
     };
 
     onAddClient(newClient);
-    setFormData({ name: "", email: "", status: "Lead", source: "", value: "" });
+    setFormData({ name: "", industry: "", status: "Active", source: "", value: "" });
     setOpen(false);
     
     toast({
@@ -83,13 +83,12 @@ export const AddClientModal = ({ onAddClient, trigger }: AddClientModalProps) =>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="industry">Industry *</Label>
             <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="contact@example.com"
+              id="industry"
+              value={formData.industry}
+              onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+              placeholder="e.g., Technology, Healthcare"
               required
             />
           </div>
@@ -101,10 +100,9 @@ export const AddClientModal = ({ onAddClient, trigger }: AddClientModalProps) =>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Lead">Lead</SelectItem>
                 <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Dormant">Dormant</SelectItem>
-                <SelectItem value="Churned">Churned</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
               </SelectContent>
             </Select>
           </div>

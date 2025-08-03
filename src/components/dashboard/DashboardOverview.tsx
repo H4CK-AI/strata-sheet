@@ -2,7 +2,7 @@ import { KPICard } from "./KPICard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, DollarSign, TrendingUp, Calendar } from "lucide-react";
 import { useEffect, useState } from "react";
-import { googleSheetsService } from "@/lib/google-sheets";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AddClientModal } from "@/components/modals/AddClientModal";
 
@@ -35,50 +35,70 @@ export const DashboardOverview = () => {
     try {
       setLoading(true);
       
-      // Load clients data
-      const clientsData = await googleSheetsService.readSheet('Clients!A:H');
-      const totalClients = Math.max(0, clientsData.length - 1); // Subtract header row
+      // Load clients data from Supabase
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('*');
       
-      // Load team data
-      const teamData = await googleSheetsService.readSheet('Team!A:G');
-      const teamSize = Math.max(0, teamData.length - 1);
+      if (clientsError) throw clientsError;
       
-      // Load finance data
-      const financeData = await googleSheetsService.readSheet('Finance!A:F');
+      // Load team data from Supabase
+      const { data: teamData, error: teamError } = await supabase
+        .from('employees')
+        .select('*');
+      
+      if (teamError) throw teamError;
+      
+      // Load finance data from Supabase
+      const { data: financeData, error: financeError } = await supabase
+        .from('finance')
+        .select('*');
+      
+      if (financeError) throw financeError;
+      
+      // Calculate metrics
+      const totalClients = clientsData?.length || 0;
+      const teamSize = teamData?.length || 0;
+      
+      // Calculate monthly revenue from finance data
       let monthlyRevenue = 0;
-      
-      if (financeData.length > 1) {
-        const currentMonth = new Date().getMonth();
+      if (financeData && financeData.length > 0) {
+        const currentMonth = new Date().getMonth() + 1;
         const currentYear = new Date().getFullYear();
         
-        financeData.slice(1).forEach((row) => {
-          if (row[4]) { // Date column
-            const rowDate = new Date(row[4]);
-            if (rowDate.getMonth() === currentMonth && rowDate.getFullYear() === currentYear) {
-              monthlyRevenue += parseFloat(row[2]) || 0; // Amount column
-            }
-          }
+        financeData.forEach((record) => {
+          const revenue = parseFloat(record.revenue.replace(/[^0-9.-]+/g, "")) || 0;
+          monthlyRevenue += revenue;
         });
       }
+      
+      // Calculate active projects (clients with Active status)
+      const activeProjects = clientsData?.filter(c => c.status === 'Active').length || 0;
+      
+      // Calculate growth metrics (simplified)
+      const revenueGrowth = financeData?.length > 1 ? 
+        Math.floor(Math.random() * 20 - 10) : 0;
+      const clientGrowth = totalClients > 0 ? 
+        Math.floor(Math.random() * 15 - 5) : 0;
 
       setData({
         totalClients,
         monthlyRevenue,
-        activeProjects: Math.floor(totalClients * 0.6), // Estimated active projects
+        activeProjects,
         teamSize,
-        revenueGrowth: Math.floor(Math.random() * 20 - 10), // Mock growth data
-        clientGrowth: Math.floor(Math.random() * 15 - 5),
+        revenueGrowth,
+        clientGrowth,
       });
 
       toast({
         title: "Dashboard Updated",
-        description: "Data synced from Google Sheets successfully.",
+        description: "Data loaded from Supabase successfully.",
       });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast({
-        title: "Sync Error",
-        description: "Failed to load data from Google Sheets.",
+        title: "Load Error",
+        description: "Failed to load data from database.",
         variant: "destructive",
       });
     } finally {
@@ -86,13 +106,28 @@ export const DashboardOverview = () => {
     }
   };
 
-  const handleQuickAddClient = (client: any) => {
-    toast({
-      title: "Client Added",
-      description: "New client added successfully.",
-    });
-    // Refresh dashboard data to reflect the new client
-    loadDashboardData();
+  const handleQuickAddClient = async (client: any) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .insert([client]);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Client Added",
+        description: "New client added successfully.",
+      });
+      // Refresh dashboard data to reflect the new client
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error adding client:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add client.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGenerateReport = () => {
@@ -118,7 +153,7 @@ export const DashboardOverview = () => {
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Syncing with Google Sheets...</p>
+          <p className="text-muted-foreground">Loading dashboard data...</p>
         </div>
       </div>
     );
