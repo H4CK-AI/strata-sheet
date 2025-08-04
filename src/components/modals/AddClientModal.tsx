@@ -66,9 +66,10 @@ export const AddClientModal = ({ onAddClient, trigger }: AddClientModalProps) =>
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="glass-card border-border/30">
+      <DialogContent className="glass-card border-border/30" aria-describedby="add-client-description">
         <DialogHeader>
           <DialogTitle className="gradient-text">Add New Client</DialogTitle>
+          <p id="add-client-description" className="text-sm text-muted-foreground">Fill in the client information below</p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

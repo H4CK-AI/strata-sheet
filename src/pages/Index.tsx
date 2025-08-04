@@ -5,6 +5,8 @@ import { CRMModule } from "@/components/modules/CRMModule";
 import { TeamModule } from "@/components/modules/TeamModule";
 import { FinanceModule } from "@/components/modules/FinanceModule";
 import { TaskModule } from "@/components/modules/TaskModule";
+import { ComplianceModule } from "@/components/modules/ComplianceModule";
+import { NotificationCenter } from "@/components/modules/NotificationCenter";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 
 const Index = () => {
@@ -20,6 +22,10 @@ const Index = () => {
         return <TeamModule />;
       case 'finance':
         return <FinanceModule />;
+      case 'compliance':
+        return <ComplianceModule />;
+      case 'notifications':
+        return <NotificationCenter />;
       case 'tasks':
         return <TaskModule />;
       case 'analytics':

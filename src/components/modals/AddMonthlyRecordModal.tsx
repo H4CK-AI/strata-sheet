@@ -61,9 +61,10 @@ export const AddMonthlyRecordModal = ({ onAddRecord, trigger }: AddMonthlyRecord
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="glass-modal max-w-lg">
+      <DialogContent className="glass-modal max-w-lg" aria-describedby="monthly-record-description">
         <DialogHeader>
           <DialogTitle className="gradient-text">Add Monthly Financial Record</DialogTitle>
+          <p id="monthly-record-description" className="text-sm text-muted-foreground">Enter financial data for the selected month</p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

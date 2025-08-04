@@ -10,7 +10,8 @@ import {
   Package,
   Kanban,
   TrendingUp,
-  Brain
+  Brain,
+  Shield
 } from "lucide-react";
 
 interface SidebarProps {
@@ -23,12 +24,10 @@ const modules = [
   { id: 'clients', label: 'CRM', icon: Users },
   { id: 'team', label: 'Team', icon: UserCog },
   { id: 'finance', label: 'Finance', icon: DollarSign },
+  { id: 'compliance', label: 'Compliance', icon: Shield },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'notifications', label: 'Notifications', icon: FileText },
   { id: 'tasks', label: 'Tasks', icon: Kanban },
-  { id: 'inventory', label: 'Inventory', icon: Package },
-  { id: 'leads', label: 'Leads', icon: TrendingUp },
-  { id: 'canvas', label: 'Strategy', icon: Brain },
-  { id: 'logs', label: 'Activity', icon: FileText },
 ];
 
 export const Sidebar = ({ activeModule, onModuleChange }: SidebarProps) => {
