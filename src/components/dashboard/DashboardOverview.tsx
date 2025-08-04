@@ -182,7 +182,7 @@ export const DashboardOverview = () => {
         
         <KPICard
           title="Monthly Revenue"
-          value={`$${data.monthlyRevenue.toLocaleString()}`}
+          value={`₹${data.monthlyRevenue.toLocaleString()}`}
           change={data.revenueGrowth}
           trend={data.revenueGrowth > 0 ? 'up' : data.revenueGrowth < 0 ? 'down' : 'neutral'}
           icon={<DollarSign className="h-4 w-4" />}

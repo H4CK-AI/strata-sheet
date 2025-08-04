@@ -219,10 +219,10 @@ export const TeamModule = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold gradient-text">
-              ${totalPayroll.toLocaleString()}
+              ₹{totalPayroll.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              ${(totalPayroll / 12).toLocaleString()} monthly
+              ₹{(totalPayroll / 12).toLocaleString()} monthly
             </p>
           </CardContent>
         </Card>

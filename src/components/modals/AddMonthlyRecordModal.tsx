@@ -82,7 +82,7 @@ export const AddMonthlyRecordModal = ({ onAddRecord, trigger }: AddMonthlyRecord
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="revenue">Revenue (₹ Lakhs)</Label>
+              <Label htmlFor="revenue">Revenue (₹)</Label>
               <Input
                 id="revenue"
                 type="text"
@@ -95,7 +95,7 @@ export const AddMonthlyRecordModal = ({ onAddRecord, trigger }: AddMonthlyRecord
             </div>
 
             <div>
-              <Label htmlFor="expenses">Expenses (₹ Lakhs)</Label>
+              <Label htmlFor="expenses">Expenses (₹)</Label>
               <Input
                 id="expenses"
                 type="text"
@@ -110,7 +110,7 @@ export const AddMonthlyRecordModal = ({ onAddRecord, trigger }: AddMonthlyRecord
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="profit">Profit (₹ Lakhs)</Label>
+              <Label htmlFor="profit">Profit (₹)</Label>
               <Input
                 id="profit"
                 type="text"
@@ -123,7 +123,7 @@ export const AddMonthlyRecordModal = ({ onAddRecord, trigger }: AddMonthlyRecord
             </div>
 
             <div>
-              <Label htmlFor="salaries">Salaries (₹ Lakhs)</Label>
+              <Label htmlFor="salaries">Salaries (₹)</Label>
               <Input
                 id="salaries"
                 type="text"
@@ -136,7 +136,7 @@ export const AddMonthlyRecordModal = ({ onAddRecord, trigger }: AddMonthlyRecord
           </div>
 
           <div>
-            <Label htmlFor="overhead">Overhead (₹ Lakhs)</Label>
+            <Label htmlFor="overhead">Overhead (₹)</Label>
             <Input
               id="overhead"
               type="text"

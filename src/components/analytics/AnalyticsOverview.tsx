@@ -128,7 +128,7 @@ export const AnalyticsOverview = () => {
             <TrendingUp className="h-4 w-4 text-neon-green" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-neon-green">${totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-neon-green">₹{totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
               Across {data.finance.length} months
             </p>

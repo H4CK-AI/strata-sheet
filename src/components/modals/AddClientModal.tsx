@@ -118,13 +118,13 @@ export const AddClientModal = ({ onAddClient, trigger }: AddClientModalProps) =>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="value">Estimated Value ($)</Label>
+            <Label htmlFor="value">Estimated Value (₹)</Label>
             <Input
               id="value"
               type="number"
               value={formData.value}
               onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              placeholder="50000"
+              placeholder="5000000"
             />
           </div>
           
