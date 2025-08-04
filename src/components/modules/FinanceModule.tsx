@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { TransactionHistory } from './TransactionHistory';
+import { AddMonthlyRecordModal } from '../modals/AddMonthlyRecordModal';
 
 interface FinanceData {
   id: string;
@@ -33,6 +34,14 @@ export const FinanceModule = () => {
   const [editingRecord, setEditingRecord] = useState<FinanceData | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // Format currency as lakhs
+  const formatCurrency = (value: number) => {
+    if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(1)}L`;
+    }
+    return `₹${value.toLocaleString()}`;
+  };
 
   useEffect(() => {
     loadFinanceData();
@@ -197,10 +206,15 @@ export const FinanceModule = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold gradient-text">Finance & Analytics</h2>
-        <Button className="glow-cyan" onClick={() => {}}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Monthly Record
-        </Button>
+        <AddMonthlyRecordModal 
+          onAddRecord={handleAddRecord}
+          trigger={
+            <Button className="glow-cyan">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Monthly Record
+            </Button>
+          }
+        />
       </div>
 
       {/* Financial Overview Cards */}
@@ -211,7 +225,7 @@ export const FinanceModule = () => {
             <TrendingUp className="h-4 w-4 text-neon-green" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-neon-green">${totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-neon-green">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-muted-foreground">
               {financeData.length} months tracked
             </p>
@@ -224,7 +238,7 @@ export const FinanceModule = () => {
             <TrendingDown className="h-4 w-4 text-neon-red" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-neon-red">${totalExpenses.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-neon-red">{formatCurrency(totalExpenses)}</div>
             <p className="text-xs text-muted-foreground">
               Including salaries & overhead
             </p>
@@ -238,7 +252,7 @@ export const FinanceModule = () => {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${totalProfit >= 0 ? 'text-neon-green' : 'text-neon-red'}`}>
-              ${totalProfit.toLocaleString()}
+              {formatCurrency(totalProfit)}
             </div>
             <p className="text-xs text-muted-foreground">
               {totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : 0}% margin
@@ -253,7 +267,7 @@ export const FinanceModule = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-neon-cyan">
-              ${financeData.length > 0 ? (totalRevenue / financeData.length).toLocaleString() : 0}
+              {financeData.length > 0 ? formatCurrency(totalRevenue / financeData.length) : '₹0'}
             </div>
             <p className="text-xs text-muted-foreground">
               Average revenue per month
@@ -261,6 +275,69 @@ export const FinanceModule = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Finance Records Table - Moved up */}
+      <Card className="glass-card">
+        <CardHeader>
+          <CardTitle className="gradient-text">Monthly Financial Records</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {financeData.map((record) => (
+              <div key={record.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/20 hover:bg-secondary/40 transition-smooth">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 flex-1">
+                  <div>
+                    <p className="font-medium">{record.month}</p>
+                    <p className="text-xs text-muted-foreground">Month</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-neon-green">{record.revenue}</p>
+                    <p className="text-xs text-muted-foreground">Revenue</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-neon-red">{record.expenses}</p>
+                    <p className="text-xs text-muted-foreground">Expenses</p>
+                  </div>
+                  <div>
+                    <p className={`font-medium ${parseFinancialValue(record.profit) >= 0 ? 'text-neon-green' : 'text-neon-red'}`}>
+                      {record.profit}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Profit</p>
+                  </div>
+                  <div className="hidden md:block">
+                    <p className="font-medium">{record.salaries || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">Salaries</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => handleEditRecord(record)}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteRecord(record.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {financeData.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No financial records found.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Transaction History Section */}
       <TransactionHistory />
@@ -324,7 +401,7 @@ export const FinanceModule = () => {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                  formatter={(value: number) => [`₹${value.toLocaleString()}`, '']}
                   contentStyle={{ 
                     backgroundColor: '#1a1a1a', 
                     border: '1px solid #333',
@@ -405,68 +482,6 @@ export const FinanceModule = () => {
         </Card>
       </div>
 
-      {/* Finance Records Table */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="gradient-text">Monthly Financial Records</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {financeData.map((record) => (
-              <div key={record.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary/20 hover:bg-secondary/40 transition-smooth">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 flex-1">
-                  <div>
-                    <p className="font-medium">{record.month}</p>
-                    <p className="text-xs text-muted-foreground">Month</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-neon-green">{record.revenue}</p>
-                    <p className="text-xs text-muted-foreground">Revenue</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-neon-red">{record.expenses}</p>
-                    <p className="text-xs text-muted-foreground">Expenses</p>
-                  </div>
-                  <div>
-                    <p className={`font-medium ${parseFinancialValue(record.profit) >= 0 ? 'text-neon-green' : 'text-neon-red'}`}>
-                      {record.profit}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Profit</p>
-                  </div>
-                  <div className="hidden md:block">
-                    <p className="font-medium">{record.salaries || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground">Salaries</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => handleEditRecord(record)}
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteRecord(record.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {financeData.length === 0 && (
-            <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No financial records found.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Edit Record Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
