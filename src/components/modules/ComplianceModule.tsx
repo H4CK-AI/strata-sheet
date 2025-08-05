@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { AddComplianceModal } from "@/components/modals/AddComplianceModal";
 import { EditComplianceModal } from "@/components/modals/EditComplianceModal";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface ComplianceItem {
   id: string;
@@ -33,6 +34,7 @@ export const ComplianceModule = () => {
   const [editingCompliance, setEditingCompliance] = useState<ComplianceItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     loadCompliance();
@@ -75,6 +77,13 @@ export const ComplianceModule = () => {
       toast({
         title: "Success",
         description: "Compliance item added successfully.",
+      });
+      addNotification({
+        title: "New Compliance Item",
+        message: `${newItem.title} has been added to compliance tracking`,
+        type: newItem.priority === "high" ? "warning" : "info",
+        priority: newItem.priority as any,
+        category: "Compliance"
       });
     } catch (error) {
       console.error('Error adding compliance item:', error);
@@ -147,6 +156,7 @@ export const ComplianceModule = () => {
 
   const handleDeleteCompliance = async (id: string) => {
     try {
+      const item = compliance.find(c => c.id === id);
       const { error } = await supabase
         .from('compliance')
         .delete()
@@ -160,6 +170,15 @@ export const ComplianceModule = () => {
         title: "Compliance Item Deleted",
         description: "Compliance item removed successfully.",
       });
+      if (item) {
+        addNotification({
+          title: "Compliance Item Removed",
+          message: `${item.title} has been removed from compliance tracking`,
+          type: "warning",
+          priority: "low",
+          category: "Compliance"
+        });
+      }
     } catch (error) {
       console.error('Error deleting compliance item:', error);
       toast({

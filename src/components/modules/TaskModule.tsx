@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, CheckCircle, Clock, AlertCircle, User } from "lucide-react";
+import { Plus, CheckCircle, Clock, AlertCircle, User, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AddTaskModal } from "@/components/modals/AddTaskModal";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface Task {
   id: string;
@@ -56,6 +57,7 @@ export const TaskModule = () => {
   const [filter, setFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
 
   const handleAddTask = (task: any) => {
     const newTask = {
@@ -67,9 +69,17 @@ export const TaskModule = () => {
       title: "Task Added",
       description: "New task created successfully.",
     });
+    addNotification({
+      title: "New Task Created",
+      message: `Task "${task.title}" has been assigned to ${task.assignee}`,
+      type: "success",
+      priority: "medium",
+      category: "Tasks"
+    });
   };
 
   const handleStatusChange = (taskId: string, newStatus: Task["status"]) => {
+    const task = tasks.find(t => t.id === taskId);
     setTasks(tasks.map(task => 
       task.id === taskId ? { ...task, status: newStatus } : task
     ));
@@ -77,6 +87,33 @@ export const TaskModule = () => {
       title: "Task Updated",
       description: `Task status changed to ${newStatus}.`,
     });
+    if (task) {
+      addNotification({
+        title: "Task Status Updated",
+        message: `"${task.title}" status changed to ${newStatus}`,
+        type: newStatus === "Done" ? "success" : "info",
+        priority: "low",
+        category: "Tasks"
+      });
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    setTasks(tasks.filter(task => task.id !== taskId));
+    toast({
+      title: "Task Deleted",
+      description: "Task has been removed successfully.",
+    });
+    if (task) {
+      addNotification({
+        title: "Task Deleted",
+        message: `Task "${task.title}" has been removed`,
+        type: "warning",
+        priority: "low",
+        category: "Tasks"
+      });
+    }
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -231,16 +268,26 @@ export const TaskModule = () => {
                           {task.project}
                         </Badge>
                         
-                        <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value as Task["status"])}>
-                          <SelectTrigger className="w-24 h-6 text-xs bg-background/50 border-primary/30">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="To Do">To Do</SelectItem>
-                            <SelectItem value="In Progress">In Progress</SelectItem>
-                            <SelectItem value="Done">Done</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Select value={task.status} onValueChange={(value) => handleStatusChange(task.id, value as Task["status"])}>
+                            <SelectTrigger className="w-24 h-6 text-xs bg-background/50 border-primary/30">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="To Do">To Do</SelectItem>
+                              <SelectItem value="In Progress">In Progress</SelectItem>
+                              <SelectItem value="Done">Done</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteTask(task.id)}
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

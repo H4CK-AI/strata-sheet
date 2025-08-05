@@ -8,6 +8,7 @@ import { TaskModule } from "@/components/modules/TaskModule";
 import { ComplianceModule } from "@/components/modules/ComplianceModule";
 import { NotificationCenter } from "@/components/modules/NotificationCenter";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
+import { NotificationProvider } from "@/hooks/useNotifications";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
@@ -43,14 +44,16 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex">
-        <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
-        <main className="flex-1 p-8">
-          {renderModule()}
-        </main>
+    <NotificationProvider>
+      <div className="min-h-screen bg-background">
+        <div className="flex">
+          <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+          <main className="flex-1 p-8">
+            {renderModule()}
+          </main>
+        </div>
       </div>
-    </div>
+    </NotificationProvider>
   );
 };
 

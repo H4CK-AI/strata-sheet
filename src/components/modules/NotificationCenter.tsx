@@ -1,91 +1,20 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, X, AlertTriangle, Info, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'success' | 'error';
-  priority: 'low' | 'medium' | 'high';
-  read: boolean;
-  timestamp: Date;
-  category: string;
-}
+import { useNotifications } from "@/hooks/useNotifications";
 
 export const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { 
+    notifications, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification, 
+    unreadCount 
+  } = useNotifications();
   const { toast } = useToast();
-
-  useEffect(() => {
-    // Load notifications from localStorage or generate sample notifications
-    const savedNotifications = localStorage.getItem('notifications');
-    if (savedNotifications) {
-      const parsedNotifications = JSON.parse(savedNotifications).map((notif: any) => ({
-        ...notif,
-        timestamp: new Date(notif.timestamp)
-      }));
-      setNotifications(parsedNotifications);
-    } else {
-      // Generate sample notifications only on first load
-      const sampleNotifications: Notification[] = [
-        {
-          id: '1',
-          title: 'GDPR Compliance Due',
-          message: 'Annual GDPR review is due in 5 days. Please complete the assessment.',
-          type: 'warning',
-          priority: 'high',
-          read: false,
-          timestamp: new Date(),
-          category: 'Compliance'
-        },
-        {
-          id: '2',
-          title: 'New Client Added',
-          message: 'TechCorp has been successfully added to your CRM.',
-          type: 'success',
-          priority: 'medium',
-          read: false,
-          timestamp: new Date(Date.now() - 3600000),
-          category: 'CRM'
-        },
-        {
-          id: '3',
-          title: 'Monthly Finance Report',
-          message: 'October financial records have been updated.',
-          type: 'info',
-          priority: 'low',
-          read: true,
-          timestamp: new Date(Date.now() - 7200000),
-          category: 'Finance'
-        },
-        {
-          id: '4',
-          title: 'Team Performance Alert',
-          message: 'Overall team performance has increased by 15% this month.',
-          type: 'success',
-          priority: 'medium',
-          read: false,
-          timestamp: new Date(Date.now() - 86400000),
-          category: 'HR'
-        }
-      ];
-      
-      setNotifications(sampleNotifications);
-      localStorage.setItem('notifications', JSON.stringify(sampleNotifications));
-    }
-  }, []);
-
-  // Save notifications to localStorage whenever they change
-  useEffect(() => {
-    if (notifications.length > 0) {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
-    }
-  }, [notifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -126,45 +55,29 @@ export const NotificationCenter = () => {
     }
   };
 
-  const addNotification = (notification: Omit<Notification, 'id'>) => {
-    const newNotification = {
-      ...notification,
-      id: Date.now().toString(),
-    };
-    setNotifications(prev => [newNotification, ...prev]);
-  };
-
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
+  const handleMarkAsRead = (id: string) => {
+    markAsRead(id);
     toast({
       title: "Notification marked as read",
       description: "The notification has been marked as read.",
     });
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notif => ({ ...notif, read: true }))
-    );
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
     toast({
       title: "All notifications marked as read",
       description: "All notifications have been marked as read.",
     });
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+  const handleDeleteNotification = (id: string) => {
+    deleteNotification(id);
     toast({
       title: "Notification deleted",
       description: "The notification has been removed.",
     });
   };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <div className="space-y-6">
@@ -178,7 +91,7 @@ export const NotificationCenter = () => {
           )}
         </div>
         {unreadCount > 0 && (
-          <Button onClick={markAllAsRead} variant="outline" size="sm">
+          <Button onClick={handleMarkAllAsRead} variant="outline" size="sm">
             <Check className="mr-2 h-4 w-4" />
             Mark all as read
           </Button>
@@ -292,7 +205,7 @@ export const NotificationCenter = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => markAsRead(notification.id)}
+                        onClick={() => handleMarkAsRead(notification.id)}
                         className="text-neon-green hover:text-neon-green"
                       >
                         <Check className="h-3 w-3" />
@@ -301,7 +214,7 @@ export const NotificationCenter = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => deleteNotification(notification.id)}
+                      onClick={() => handleDeleteNotification(notification.id)}
                       className="text-destructive hover:text-destructive"
                     >
                       <X className="h-3 w-3" />

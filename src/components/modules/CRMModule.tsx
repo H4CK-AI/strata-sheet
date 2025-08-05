@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { AddClientModal } from "@/components/modals/AddClientModal";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +36,7 @@ export const CRMModule = () => {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     loadClients();
@@ -103,6 +105,13 @@ export const CRMModule = () => {
         title: "Success",
         description: "Client added successfully.",
       });
+      addNotification({
+        title: "New Client Added",
+        message: `${newClient.name} has been successfully added to your CRM`,
+        type: "success",
+        priority: "medium",
+        category: "CRM"
+      });
     } catch (error) {
       console.error('Error adding client:', error);
       toast({
@@ -148,6 +157,7 @@ export const CRMModule = () => {
 
   const handleDeleteClient = async (clientId: string) => {
     try {
+      const client = clients.find(c => c.id === clientId);
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -160,6 +170,15 @@ export const CRMModule = () => {
         title: "Client Deleted",
         description: "Client removed successfully.",
       });
+      if (client) {
+        addNotification({
+          title: "Client Removed",
+          message: `${client.name} has been removed from your CRM`,
+          type: "warning",
+          priority: "low",
+          category: "CRM"
+        });
+      }
     } catch (error) {
       console.error('Error deleting client:', error);
       toast({
