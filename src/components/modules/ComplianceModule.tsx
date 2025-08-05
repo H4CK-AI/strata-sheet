@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Shield, AlertTriangle, CheckCircle, Clock, Search } from "lucide-react";
+import { Plus, Shield, AlertTriangle, CheckCircle, Clock, Search, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { AddComplianceModal } from "@/components/modals/AddComplianceModal";
+import { EditComplianceModal } from "@/components/modals/EditComplianceModal";
 
 interface ComplianceItem {
   id: string;
@@ -29,6 +30,8 @@ export const ComplianceModule = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [editingCompliance, setEditingCompliance] = useState<ComplianceItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -105,6 +108,63 @@ export const ComplianceModule = () => {
       toast({
         title: "Error",
         description: "Failed to update status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditCompliance = (item: ComplianceItem) => {
+    setEditingCompliance(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateCompliance = async (updatedItem: ComplianceItem) => {
+    try {
+      const { error } = await supabase
+        .from('compliance')
+        .update(updatedItem)
+        .eq('id', updatedItem.id);
+      
+      if (error) throw error;
+      
+      setCompliance(prev => prev.map(item => 
+        item.id === updatedItem.id ? updatedItem : item
+      ));
+      
+      toast({
+        title: "Success",
+        description: "Compliance item updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating compliance item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update compliance item.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteCompliance = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('compliance')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setCompliance(prev => prev.filter(item => item.id !== id));
+      
+      toast({
+        title: "Compliance Item Deleted",
+        description: "Compliance item removed successfully.",
+      });
+    } catch (error) {
+      console.error('Error deleting compliance item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete compliance item.",
         variant: "destructive",
       });
     }
@@ -325,6 +385,22 @@ export const ComplianceModule = () => {
                   </div>
                 </div>
                 <div className="flex gap-2 ml-4">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditCompliance(item)}
+                    className="text-neon-cyan hover:text-neon-cyan"
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteCompliance(item.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                   {item.status !== 'completed' && (
                     <Button
                       size="sm"
@@ -332,8 +408,7 @@ export const ComplianceModule = () => {
                       onClick={() => handleUpdateStatus(item.id, 'completed')}
                       className="text-neon-green hover:text-neon-green"
                     >
-                      <CheckCircle className="mr-2 h-3 w-3" />
-                      Complete
+                      <CheckCircle className="h-3 w-3" />
                     </Button>
                   )}
                   {item.status === 'completed' && (
@@ -343,8 +418,7 @@ export const ComplianceModule = () => {
                       onClick={() => handleUpdateStatus(item.id, 'pending')}
                       className="text-yellow-400 hover:text-yellow-400"
                     >
-                      <Clock className="mr-2 h-3 w-3" />
-                      Reopen
+                      <Clock className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
@@ -380,6 +454,14 @@ export const ComplianceModule = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Compliance Modal */}
+      <EditComplianceModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        compliance={editingCompliance}
+        onUpdateCompliance={handleUpdateCompliance}
+      />
     </div>
   );
 };

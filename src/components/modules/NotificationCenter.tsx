@@ -22,52 +22,70 @@ export const NotificationCenter = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Generate sample notifications
-    const sampleNotifications: Notification[] = [
-      {
-        id: '1',
-        title: 'GDPR Compliance Due',
-        message: 'Annual GDPR review is due in 5 days. Please complete the assessment.',
-        type: 'warning',
-        priority: 'high',
-        read: false,
-        timestamp: new Date(),
-        category: 'Compliance'
-      },
-      {
-        id: '2',
-        title: 'New Client Added',
-        message: 'TechCorp has been successfully added to your CRM.',
-        type: 'success',
-        priority: 'medium',
-        read: false,
-        timestamp: new Date(Date.now() - 3600000),
-        category: 'CRM'
-      },
-      {
-        id: '3',
-        title: 'Monthly Finance Report',
-        message: 'October financial records have been updated.',
-        type: 'info',
-        priority: 'low',
-        read: true,
-        timestamp: new Date(Date.now() - 7200000),
-        category: 'Finance'
-      },
-      {
-        id: '4',
-        title: 'Team Performance Alert',
-        message: 'Overall team performance has increased by 15% this month.',
-        type: 'success',
-        priority: 'medium',
-        read: false,
-        timestamp: new Date(Date.now() - 86400000),
-        category: 'HR'
-      }
-    ];
-    
-    setNotifications(sampleNotifications);
+    // Load notifications from localStorage or generate sample notifications
+    const savedNotifications = localStorage.getItem('notifications');
+    if (savedNotifications) {
+      const parsedNotifications = JSON.parse(savedNotifications).map((notif: any) => ({
+        ...notif,
+        timestamp: new Date(notif.timestamp)
+      }));
+      setNotifications(parsedNotifications);
+    } else {
+      // Generate sample notifications only on first load
+      const sampleNotifications: Notification[] = [
+        {
+          id: '1',
+          title: 'GDPR Compliance Due',
+          message: 'Annual GDPR review is due in 5 days. Please complete the assessment.',
+          type: 'warning',
+          priority: 'high',
+          read: false,
+          timestamp: new Date(),
+          category: 'Compliance'
+        },
+        {
+          id: '2',
+          title: 'New Client Added',
+          message: 'TechCorp has been successfully added to your CRM.',
+          type: 'success',
+          priority: 'medium',
+          read: false,
+          timestamp: new Date(Date.now() - 3600000),
+          category: 'CRM'
+        },
+        {
+          id: '3',
+          title: 'Monthly Finance Report',
+          message: 'October financial records have been updated.',
+          type: 'info',
+          priority: 'low',
+          read: true,
+          timestamp: new Date(Date.now() - 7200000),
+          category: 'Finance'
+        },
+        {
+          id: '4',
+          title: 'Team Performance Alert',
+          message: 'Overall team performance has increased by 15% this month.',
+          type: 'success',
+          priority: 'medium',
+          read: false,
+          timestamp: new Date(Date.now() - 86400000),
+          category: 'HR'
+        }
+      ];
+      
+      setNotifications(sampleNotifications);
+      localStorage.setItem('notifications', JSON.stringify(sampleNotifications));
+    }
   }, []);
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    if (notifications.length > 0) {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+    }
+  }, [notifications]);
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -106,6 +124,14 @@ export const NotificationCenter = () => {
       default:
         return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const addNotification = (notification: Omit<Notification, 'id'>) => {
+    const newNotification = {
+      ...notification,
+      id: Date.now().toString(),
+    };
+    setNotifications(prev => [newNotification, ...prev]);
   };
 
   const markAsRead = (id: string) => {

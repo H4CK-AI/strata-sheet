@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -266,6 +266,19 @@ export const TransactionHistory = () => {
     );
   }
 
+  // Calculate analytics
+  const totalIncome = transactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = transactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+  const netProfit = totalIncome - totalExpenses;
+  const avgMonthlyIncome = transactions.length > 0 ? totalIncome / (new Set(transactions.map(t => t.date.substring(0, 7))).size || 1) : 0;
+
+  const formatCurrency = (value: number) => {
+    if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(1)}L`;
+    }
+    return `₹${value.toLocaleString()}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -277,6 +290,63 @@ export const TransactionHistory = () => {
           <Plus className="w-4 h-4 mr-2" />
           Add Transaction
         </Button>
+      </div>
+
+      {/* Transaction Analytics Cards */}
+      <div className="grid gap-6 md:grid-cols-4">
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+            <TrendingUp className="h-4 w-4 text-neon-green" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-neon-green">{formatCurrency(totalIncome)}</div>
+            <p className="text-xs text-muted-foreground">
+              {transactions.filter(t => t.type === 'Income').length} transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <TrendingDown className="h-4 w-4 text-neon-red" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-neon-red">{formatCurrency(totalExpenses)}</div>
+            <p className="text-xs text-muted-foreground">
+              {transactions.filter(t => t.type === 'Expense').length} transactions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+            <DollarSign className="h-4 w-4 text-neon-cyan" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-neon-green' : 'text-neon-red'}`}>
+              {formatCurrency(netProfit)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : 0}% margin
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Monthly</CardTitle>
+            <Clock className="h-4 w-4 text-neon-cyan" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-neon-cyan">{formatCurrency(avgMonthlyIncome)}</div>
+            <p className="text-xs text-muted-foreground">
+              Average income per month
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search and Filter */}
