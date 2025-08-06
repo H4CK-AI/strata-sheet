@@ -9,9 +9,14 @@ import { ComplianceModule } from "@/components/modules/ComplianceModule";
 import { NotificationCenter } from "@/components/modules/NotificationCenter";
 import { AnalyticsOverview } from "@/components/analytics/AnalyticsOverview";
 import { NotificationProvider } from "@/hooks/useNotifications";
+import { Scene3D } from "@/components/3d/Scene3D";
+import { Dashboard3D } from "@/components/3d/Dashboard3D";
+import { HUD3D } from "@/components/3d/HUD3D";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
+  const [is3DMode, setIs3DMode] = useState(false);
 
   const renderModule = () => {
     switch (activeModule) {
@@ -46,12 +51,50 @@ const Index = () => {
   return (
     <NotificationProvider>
       <div className="min-h-screen bg-background">
-        <div className="flex">
-          <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
-          <main className="flex-1 p-8">
-            {renderModule()}
-          </main>
-        </div>
+        {is3DMode ? (
+          // 3D Mode
+          <div className="relative w-full h-screen overflow-hidden">
+            <Scene3D>
+              <Dashboard3D 
+                activeModule={activeModule} 
+                onModuleChange={setActiveModule} 
+              />
+              <HUD3D 
+                activeModule={activeModule} 
+                onModuleChange={setActiveModule} 
+              />
+            </Scene3D>
+            {/* Toggle Button */}
+            <div className="absolute top-4 right-4 z-50">
+              <Button
+                onClick={() => setIs3DMode(false)}
+                variant="outline"
+                className="glass-card neon-border"
+              >
+                Exit 3D Mode
+              </Button>
+            </div>
+          </div>
+        ) : (
+          // 2D Mode (Original)
+          <div className="flex">
+            <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
+            <main className="flex-1 p-8 relative">
+              {renderModule()}
+              {/* 3D Mode Toggle */}
+              <div className="fixed bottom-8 right-8 z-50">
+                <Button
+                  onClick={() => setIs3DMode(true)}
+                  variant="default"
+                  className="glass-card neon-border glow-cyan"
+                  size="lg"
+                >
+                  🚀 Enter 3D Mode
+                </Button>
+              </div>
+            </main>
+          </div>
+        )}
       </div>
     </NotificationProvider>
   );

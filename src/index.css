@@ -123,9 +123,9 @@ All colors MUST be HSL.
 
 @layer components {
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/30;
+    @apply bg-card/80 backdrop-blur-xl border border-border/40 rounded-2xl;
     background: var(--gradient-card);
-    box-shadow: var(--shadow-elevated);
+    box-shadow: var(--shadow-elevated), 0 0 30px hsl(var(--primary) / 0.2);
   }
   
   .neon-border {
