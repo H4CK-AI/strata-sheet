@@ -81,15 +81,14 @@ const Index = () => {
             <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
             <main className="flex-1 p-8 relative">
               {renderModule()}
-              {/* 3D Mode Toggle */}
               <div className="fixed bottom-8 right-8 z-50">
                 <Button
                   onClick={() => setIs3DMode(true)}
                   variant="default"
-                  className="glass-card neon-border glow-cyan"
+                  className="glass-card neon-border glow-cyan shadow-2xl animate-pulse"
                   size="lg"
                 >
-                  🚀 Enter 3D Mode
+                  🚀 Enter Ultra 3D Mode
                 </Button>
               </div>
             </main>
