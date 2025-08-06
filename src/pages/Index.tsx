@@ -81,15 +81,23 @@ const Index = () => {
             <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
             <main className="flex-1 p-8 relative">
               {renderModule()}
-              <div className="fixed bottom-8 right-8 z-50">
-                <Button
-                  onClick={() => setIs3DMode(true)}
-                  variant="default"
-                  className="glass-card neon-border glow-cyan shadow-2xl animate-pulse"
-                  size="lg"
-                >
-                  🚀 Enter Ultra 3D Mode
-                </Button>
+              {/* SUPER VISIBLE 3D Mode Toggle */}
+              <div className="fixed bottom-4 right-4 z-[9999]">
+                <div className="relative">
+                  <Button
+                    onClick={() => {
+                      console.log("3D Mode activating...");
+                      setIs3DMode(true);
+                    }}
+                    className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 hover:from-cyan-500 hover:via-blue-600 hover:to-purple-700 text-white font-bold text-lg px-8 py-4 rounded-2xl shadow-2xl border-2 border-white/50 transform hover:scale-105 transition-all duration-300 animate-bounce"
+                  >
+                    <span className="text-3xl mr-3">🚀</span>
+                    ENTER 3D MODE
+                  </Button>
+                  {/* Animated glow effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-2xl blur-xl opacity-60 -z-10 animate-pulse"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 rounded-2xl blur-2xl opacity-30 -z-20 animate-ping"></div>
+                </div>
               </div>
             </main>
           </div>
